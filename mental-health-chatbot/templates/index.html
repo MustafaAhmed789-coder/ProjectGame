@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamic Mental Health App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .ai-chat-box {
+            background: linear-gradient(145deg, #1a1f2c, #2d3748);
+            border: 1px solid #4fd1c5;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .ai-chat-header {
+            background: linear-gradient(90deg, #2d3748, #1a1f2c);
+            border-bottom: 1px solid #4fd1c5;
+            padding: 15px;
+        }
+
+        .ai-chat-messages {
+            padding: 15px;
+            background: rgba(26, 32, 44, 0.8);
+        }
+
+        .ai-message {
+            margin-bottom: 15px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.3s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message .message-content {
+            background: #4fd1c5;
+            color: #1a1f2c;
+            border-radius: 15px 15px 0 15px;
+        }
+
+        .ai-message .message-content {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 15px 15px 15px 0;
+        }
+
+        .system-message {
+            background: rgba(79, 209, 197, 0.1);
+            border-left: 3px solid #4fd1c5;
+            padding: 10px 15px;
+            color: #e2e8f0;
+        }
+
+        .ai-chat-input {
+            background: #2d3748;
+            border-top: 1px solid #4fd1c5;
+            padding: 15px;
+        }
+
+        .ai-chat-input textarea {
+            background: #1a1f2c;
+            color: #e2e8f0;
+            border: 1px solid #4fd1c5;
+            border-radius: 8px;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .ai-chat-input textarea:focus {
+            border-color: #38b2ac;
+            box-shadow: 0 0 0 2px rgba(79, 209, 197, 0.2);
+        }
+
+        .ai-chat-input button {
+            background: #4fd1c5;
+            color: #1a1f2c;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .ai-chat-input button:hover {
+            background: #38b2ac;
+            transform: translateY(-2px);
+        }
+
+        .typing-indicator {
+            padding: 10px;
+            background: rgba(79, 209, 197, 0.1);
+            border-radius: 8px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #4fd1c5;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Side Menu -->
+        <div class="side-menu">
+            <div class="logo">
+                <h2>Islamic Mental Health</h2>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Main Window Page -->
+            <div class="page" id="main-page">
+                <div class="daily-verse">
+                    <h2>Daily Verse</h2>
+                    <div class="verse-content" id="daily-verse">
+                        <!-- Daily verse will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="mood-buttons">
+                    <h2>How are you feeling today?</h2>
+                    <div class="mood-grid">
+                        <button class="mood-btn" data-mood="sad">
+                            <i class="fas fa-sad-tear"></i>
+                            <span>Sad</span>
+                        </button>
+                        <button class="mood-btn" data-mood="angry">
+                            <i class="fas fa-angry"></i>
+                            <span>Angry</span>
+                        </button>
+                        <button class="mood-btn" data-mood="happy">
+                            <i class="fas fa-smile"></i>
+                            <span>Happy</span>
+                        </button>
+                        <button class="mood-btn" data-mood="anxious">
+                            <i class="fas fa-face-dizzy"></i>
+                            <span>Anxious</span>
+                        </button>
+                        <button class="mood-btn" data-mood="depressed">
+                            <i class="fas fa-sad-cry"></i>
+                            <span>Depressed</span>
+                        </button>
+                        <button class="mood-btn" data-mood="excited">
+                            <i class="fas fa-laugh"></i>
+                            <span>Excited</span>
+                        </button>
+                        <button class="mood-btn" data-mood="goal">
+                            <i class="fas fa-bullseye"></i>
+                            <span>Achieve a Goal</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content-section" id="mood-content">
+                    <!-- Content will be loaded here based on mood selection -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chat Box -->
+    <div class="ai-chat-container">
+        <button id="ai-chat-button" class="ai-button" onclick="toggleAIChat()">
+            <i class="fas fa-comment-dots"></i>
+            <span>AI Chat</span>
+        </button>
+
+        <div id="ai-chat-box" class="ai-chat-box">
+            <div class="ai-chat-header">
+                <h3><i class="fas fa-robot"></i> Islamic AI Assistant</h3>
+                <button class="close-button" onclick="toggleAIChat()">×</button>
+            </div>
+            <div class="ai-chat-messages" id="ai-chat-messages">
+                <div class="ai-message system-message">
+                    Assalamu Alaikum! I'm here to help you with Islamic guidance and support. How can I assist you today?
+                </div>
+            </div>
+            <div class="ai-chat-input">
+                <textarea id="ai-user-input" placeholder="Ask me anything..." rows="1"></textarea>
+                <button onclick="sendAIMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = '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';
+        
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show main page
+            document.getElementById('main-page').style.display = 'block';
+            
+            // Setup mood buttons
+            document.querySelectorAll('.mood-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const selectedMood = button.getAttribute('data-mood');
+                    loadMoodContent(selectedMood);
+                });
+            });
+
+            // Load initial daily verse
+            loadDailyVerse();
+        });
+
+        // Map moods to relevant content
+        const moodContent = {
+            'sad': {
+                surahs: ['93', '94', '95'],
+                description: 'Find comfort and hope in these verses during difficult times',
+                hadiths: [
+                    {
+                        text: "The Prophet (ﷺ) said: 'No fatigue, nor disease, nor sorrow, nor sadness, nor hurt, nor distress befalls a Muslim, even if it were the prick he receives from a thorn, but that Allah expiates some of his sins for that.'",
+                        source: "Sahih al-Bukhari 5641"
+                    },
+                    {
+                        text: "The Prophet (ﷺ) said: 'Allah does not burden a soul beyond that it can bear.'",
+                        source: "Sahih al-Bukhari 2996"
+                    }
+                ],
+                duas: [
+                    {
+                        arabic: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ",
+                        translation: "O Allah, I seek refuge in You from anxiety and sorrow",
+                        reference: "Dua for removing sadness"
+                    },
+                    {
+                        arabic: "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",
+                        translation: "Allah (Alone) is Sufficient for us, and He is the Best Disposer of affairs",
+                        reference: "Dua for trust in Allah"
+                    }
+                ]
+            },
+            'angry': {
+                surahs: ['41', '42'],
+                description: 'Verses to help calm your anger and find inner peace',
+                hadiths: [
+                    {
+                        text: "The Prophet (ﷺ) said: 'The strong is not the one who overcomes the people by his strength, but the strong is the one who controls himself while in anger.'",
+                        source: "Sahih al-Bukhari 6114"
+                    },
+                    {
+                        text: "The Prophet (ﷺ) said to a man: 'Do not become angry.' The man repeated his request several times, and each time the Prophet (ﷺ) told him: 'Do not become angry.'",
+                        source: "Sahih al-Bukhari 6116"
+                    }
+                ],
+                duas: [
+                    {
+                        arabic: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+                        translation: "I seek refuge with Allah from Satan, the accursed",
+                        reference: "Dua when feeling angry"
+                    }
+                ]
+            },
+            'happy': {
+                surahs: ['55', '56'],
+                description: 'Celebrate and express gratitude with these verses',
+                hadiths: [
+                    {
+                        text: "The Prophet (ﷺ) said: 'How wonderful is the case of a believer; there is good for him in everything and this applies only to a believer.'",
+                        source: "Sahih Muslim 2999"
+                    },
+                    {
+                        text: "The Prophet (ﷺ) said: 'The most beloved deeds to Allah are those done regularly, even if they are small.'",
+                        source: "Sahih al-Bukhari 6464"
+                    }
+                ],
+                duas: [
+                    {
+                        arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+                        translation: "All praise is due to Allah, Lord of the worlds",
+                        reference: "Dua of gratitude"
+                    }
+                ]
+            },
+            'anxious': {
+                surahs: ['2:286', '3:139'],
+                description: 'Find tranquility and relief from anxiety through these verses',
+                hadiths: [
+                    {
+                        text: "The Prophet (ﷺ) said: 'When you are afflicted with anxiety and sorrow, say: O Allah, I am Your servant, son of Your servant, son of Your maidservant, my forelock is in Your hand...'",
+                        source: "Ahmad 3712"
+                    }
+                ],
+                duas: [
+                    {
+                        arabic: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ",
+                        translation: "O Allah, I seek refuge in You from worry and grief, from incapacity and laziness",
+                        reference: "Dua for anxiety"
+                    }
+                ]
+            },
+            'depressed': {
+                surahs: ['93', '94'],
+                description: 'Discover hope and healing in these uplifting verses',
+                hadiths: [
+                    {
+                        text: "The Prophet (ﷺ) said: 'There is no disease that Allah has created, except that He also has created its treatment.'",
+                        source: "Sahih al-Bukhari 5678"
+                    }
+                ],
+                duas: [
+                    {
+                        arabic: "رَبِّ إِنِّي مَسَّنِيَ الضُّرُّ وَأَنتَ أَرْحَمُ الرَّاحِمِينَ",
+                        translation: "My Lord, indeed adversity has touched me, and you are the Most Merciful of the merciful",
+                        reference: "Dua of Prophet Ayyub (AS)"
+                    }
+                ]
+            },
+            'excited': {
+                surahs: ['55', '56'],
+                description: 'Channel your excitement into gratitude and positive energy',
+                hadiths: [
+                    {
+                        text: "The Prophet (ﷺ) said: 'He who does not thank people does not thank Allah.'",
+                        source: "Abu Dawud 4811"
+                    }
+                ],
+                duas: [
+                    {
+                        arabic: "اللَّهُمَّ لَكَ الْحَمْدُ كَمَا يَنْبَغِي لِجَلَالِ وَجْهِكَ وَعَظِيمِ سُلْطَانِكَ",
+                        translation: "O Allah, for You is all praise as befits the Glory of Your Face and the Greatness of Your Might",
+                        reference: "Dua of gratitude and praise"
+                    }
+                ]
+            },
+            'goal': {
+                surahs: ['2:286', '3:139'],
+                description: 'Find motivation and guidance for achieving your goals',
+                hadiths: [
+                    {
+                        text: "The Prophet (ﷺ) said: 'The reward of deeds depends upon the intentions and every person will get the reward according to what he has intended.'",
+                        source: "Sahih al-Bukhari 1"
+                    }
+                ],
+                duas: [
+                    {
+                        arabic: "رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي",
+                        translation: "My Lord, expand for me my breast [with assurance] and ease for me my task",
+                        reference: "Dua of Prophet Musa (AS)"
+                    }
+                ]
+            }
+        };
+
+        // Load Daily Verse
+        function loadDailyVerse() {
+            const verseContainer = document.getElementById('daily-verse');
+            verseContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading verse...</div>';
+            
+            const randomSurah = Math.floor(Math.random() * 114) + 1;
+            
+            // First get Arabic version
+            fetch(`https://api.alquran.cloud/v1/surah/${randomSurah}/ar.alafasy`)
+                .then(response => response.json())
+                .then(arabicData => {
+                    if (arabicData.code === 200) {
+                        // Then get English translation
+                        return fetch(`https://api.alquran.cloud/v1/surah/${randomSurah}/en.asad`)
+                            .then(response => response.json())
+                            .then(englishData => {
+                                if (englishData.code === 200) {
+                                    const numberOfAyahs = englishData.data.numberOfAyahs;
+                                    const randomAyah = Math.floor(Math.random() * numberOfAyahs);
+                                    
+                                    const arabicVerse = arabicData.data.ayahs[randomAyah];
+                                    const englishVerse = englishData.data.ayahs[randomAyah];
+                                    
+                                    verseContainer.innerHTML = `
+                                        <div class="verse-item">
+                                            <div class="verse-arabic">${arabicVerse.text}</div>
+                                            <div class="verse-translation">${englishVerse.text}</div>
+                                            <div class="verse-reference">
+                                                Surah ${englishData.data.englishName} (${arabicData.data.name}) - Verse ${englishVerse.numberInSurah}
+                                            </div>
+                                            <button onclick="loadDailyVerse()" class="refresh-verse">
+                                                <i class="fas fa-sync-alt"></i> New Verse
+                                            </button>
+                                        </div>
+                                    `;
+                                }
+                            });
+                    }
+                })
+                .catch(error => {
+                    verseContainer.innerHTML = '<p>Unable to load daily verse. Please try again later.</p>';
+                });
+        }
+
+        // Load Mood Content
+        function loadMoodContent(mood) {
+            const contentSection = document.getElementById('mood-content');
+            
+            contentSection.style.opacity = '0';
+            contentSection.style.transform = 'translateY(10px)';
+            
+            setTimeout(() => {
+                contentSection.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading content...</div>';
+                contentSection.style.opacity = '1';
+                contentSection.style.transform = 'translateY(0)';
+
+                const selectedContent = moodContent[mood] || {
+                    surahs: ['1'],
+                    description: 'General guidance and support',
+                    hadiths: [],
+                    duas: []
+                };
+
+                contentSection.innerHTML = `
+                    <div class="content-nav">
+                        <button class="nav-btn active" onclick="loadQuranContent('${mood}')">
+                            <i class="fas fa-book"></i> Quran
+                        </button>
+                        <button class="nav-btn" onclick="loadHadithContent('${mood}')">
+                            <i class="fas fa-scroll"></i> Hadith
+                        </button>
+                        <button class="nav-btn" onclick="loadDuaContent('${mood}')">
+                            <i class="fas fa-pray"></i> Dua
+                        </button>
+                    </div>
+                    <div id="content-display">
+                        <!-- Content will be loaded here -->
+                    </div>
+                `;
+
+                // Load initial Quran content
+                loadQuranContent(mood);
+            }, 300);
+        }
+
+        // Load Quran Content
+        function loadQuranContent(mood) {
+            updateNavButtons('Quran');
+            const contentDisplay = document.getElementById('content-display');
+            contentDisplay.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading Quranic guidance...</div>';
+            
+            const selectedContent = moodContent[mood];
+            const surah = selectedContent.surahs[Math.floor(Math.random() * selectedContent.surahs.length)];
+            
+            // First fetch Arabic version
+            fetch(`https://api.alquran.cloud/v1/surah/${surah}/ar.alafasy`)
+                .then(response => response.json())
+                .then(arabicData => {
+                    if (arabicData.code === 200) {
+                        // Then fetch English translation
+                        return fetch(`https://api.alquran.cloud/v1/surah/${surah}/en.asad`)
+                            .then(response => response.json())
+                            .then(englishData => {
+                                if (englishData.code === 200) {
+                                    const verses = englishData.data.ayahs;
+                                    const randomVerseIndex = Math.floor(Math.random() * verses.length);
+                                    const arabicVerse = arabicData.data.ayahs[randomVerseIndex];
+                                    const englishVerse = verses[randomVerseIndex];
+                                    
+                                    contentDisplay.innerHTML = `
+                                        <div class="content-header">
+                                            <h3>Quranic Guidance</h3>
+                                            <p class="description">${selectedContent.description}</p>
+                                        </div>
+                                        <div class="verse-container">
+                                            <div class="arabic-text">${arabicVerse.text}</div>
+                                            <div class="translation">${englishVerse.text}</div>
+                                            <div class="reference">
+                                                Surah ${englishData.data.englishName} (${englishData.data.name}), Verse ${englishVerse.numberInSurah}
+                                            </div>
+                                            <button onclick="loadQuranContent('${mood}')" class="refresh-content">
+                                                <i class="fas fa-sync-alt"></i> New Verse
+                                            </button>
+                                        </div>
+                                    `;
+                                }
+                            });
+                    }
+                })
+                .catch(error => {
+                    contentDisplay.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Unable to load Quranic content. Please try again.
+                        </div>
+                    `;
+                });
+        }
+
+        // Load Hadith Content
+        function loadHadithContent(mood) {
+            updateNavButtons('Hadith');
+            const contentDisplay = document.getElementById('content-display');
+            contentDisplay.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading Hadith...</div>';
+            
+            const selectedContent = moodContent[mood];
+            if (selectedContent.hadiths && selectedContent.hadiths.length > 0) {
+                const hadith = selectedContent.hadiths[Math.floor(Math.random() * selectedContent.hadiths.length)];
+                
+                contentDisplay.innerHTML = `
+                    <div class="content-header">
+                        <h3>Prophetic Guidance</h3>
+                        <p class="description">${selectedContent.description}</p>
+                    </div>
+                    <div class="hadith-container">
+                        <div class="hadith-text">${hadith.text}</div>
+                        <div class="reference">${hadith.source}</div>
+                        <button onclick="loadHadithContent('${mood}')" class="refresh-content">
+                            <i class="fas fa-sync-alt"></i> New Hadith
+                        </button>
+                    </div>
+                `;
+            } else {
+                contentDisplay.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        No Hadith available for this mood. Please try another content type.
+                    </div>
+                `;
+            }
+        }
+
+        // Load Dua Content
+        function loadDuaContent(mood) {
+            updateNavButtons('Dua');
+            const contentDisplay = document.getElementById('content-display');
+            contentDisplay.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading Dua...</div>';
+            
+            const selectedContent = moodContent[mood];
+            if (selectedContent.duas && selectedContent.duas.length > 0) {
+                const dua = selectedContent.duas[Math.floor(Math.random() * selectedContent.duas.length)];
+                
+                contentDisplay.innerHTML = `
+                    <div class="content-header">
+                        <h3>Supplications</h3>
+                        <p class="description">${selectedContent.description}</p>
+                    </div>
+                    <div class="dua-container">
+                        <div class="arabic-text">${dua.arabic}</div>
+                        <div class="translation">${dua.translation}</div>
+                        <div class="reference">${dua.reference}</div>
+                        <button onclick="loadDuaContent('${mood}')" class="refresh-content">
+                            <i class="fas fa-sync-alt"></i> New Dua
+                        </button>
+                    </div>
+                `;
+            } else {
+                contentDisplay.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        No Dua available for this mood. Please try another content type.
+                    </div>
+                `;
+            }
+        }
+
+        // Update Navigation Buttons
+        function updateNavButtons(activeType) {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.trim().includes(activeType)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // AI Chat Functions
+        function toggleAIChat() {
+            const chatBox = document.getElementById('ai-chat-box');
+            chatBox.classList.toggle('active');
+            if (chatBox.classList.contains('active')) {
+                document.getElementById('ai-user-input').focus();
+            }
+        }
+
+        // Store chat history
+        let chatHistory = [{
+            role: 'system',
+            content: 'You are a knowledgeable Islamic AI assistant providing guidance based on Quran and authentic hadiths. Always be respectful and provide authentic references.'
+        }];
+
+        function sendAIMessage() {
+            const input = document.getElementById('ai-user-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                // Disable input and button while processing
+                input.disabled = true;
+                const sendButton = input.nextElementSibling;
+                sendButton.disabled = true;
+                
+                // Add user message
+                addAIMessage('user', message);
+                
+                // Add to chat history
+                chatHistory.push({
+                    role: 'user',
+                    content: message
+                });
+
+                // Show typing indicator
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'ai-message typing-indicator';
+                typingIndicator.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+                document.getElementById('ai-chat-messages').appendChild(typingIndicator);
+                
+                // Call API with retry mechanism
+                callAIAPI(message, typingIndicator, input, sendButton);
+            }
+        }
+
+        function callAIAPI(message, typingIndicator, input, sendButton, retryCount = 0) {
+            const maxRetries = 3;
+            
+            fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'HTTP-Referer': window.location.href,
+                    'X-Title': 'Islamic Mental Health App'
+                },
+                body: JSON.stringify({
+                    model: 'mistralai/mistral-7b-instruct',
+                    messages: chatHistory,
+                    temperature: 0.7,
+                    max_tokens: 250,
+                    presence_penalty: 0.6,
+                    frequency_penalty: 0.3
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remove typing indicator
+                typingIndicator.remove();
+                
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    const aiResponse = data.choices[0].message.content;
+                    
+                    // Add to chat history
+                    chatHistory.push({
+                        role: 'assistant',
+                        content: aiResponse
+                    });
+
+                    // Keep chat history manageable
+                    if (chatHistory.length > 10) {
+                        chatHistory = [
+                            chatHistory[0],
+                            ...chatHistory.slice(-9)
+                        ];
+                    }
+
+                    addAIMessage('ai', aiResponse);
+                } else {
+                    throw new Error('Invalid API response format');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                if (retryCount < maxRetries) {
+                    // Retry after a delay
+                    setTimeout(() => {
+                        callAIAPI(message, typingIndicator, input, sendButton, retryCount + 1);
+                    }, 1000 * (retryCount + 1)); // Exponential backoff
+                } else {
+                    typingIndicator.remove();
+                    addAIMessage('system', 'I apologize, but I am having trouble connecting to the service. Please check your internet connection and try again.');
+                }
+            })
+            .finally(() => {
+                // Re-enable input and button
+                input.disabled = false;
+                sendButton.disabled = false;
+                input.value = '';
+                input.style.height = 'auto';
+                input.focus();
+            });
+        }
+
+        function addAIMessage(type, message) {
+            const messagesContainer = document.getElementById('ai-chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ${type}-message`;
+            
+            if (type === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="message-text">${message}</div>
+                    </div>
+                `;
+            } else if (type === 'ai') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <div class="ai-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-text">${formatAIResponse(message)}</div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-content system-text">
+                        <i class="fas fa-exclamation-circle"></i>
+                        ${message}
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function formatAIResponse(text) {
+            // Convert markdown-style formatting to HTML
+            return text
+                .split('\n')
+                .map(paragraph => {
+                    if (!paragraph.trim()) return '';
+                    
+                    // Handle Quranic verses
+                    if (paragraph.includes('Quran')) {
+                        return `<div class="quran-reference">${paragraph}</div>`;
+                    }
+                    
+                    // Handle Hadith references
+                    if (paragraph.includes('Hadith') || paragraph.includes('Sahih')) {
+                        return `<div class="hadith-reference">${paragraph}</div>`;
+                    }
+                    
+                    // Handle bullet points
+                    if (paragraph.trim().startsWith('*') || paragraph.trim().startsWith('-')) {
+                        return `<li>${paragraph.substring(1).trim()}</li>`;
+                    }
+                    
+                    // Regular paragraphs
+                    return `<p>${paragraph}</p>`;
+                })
+                .join('')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+                .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic text
+        }
+
+        // Handle Enter key for sending messages
+        document.getElementById('ai-user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendAIMessage();
+            }
+        });
+
+        // Auto-resize textarea
+        document.getElementById('ai-user-input').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    </script>
+</body>
+</html> 
