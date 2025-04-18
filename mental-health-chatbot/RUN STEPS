@@ -1,0 +1,6 @@
+First you have python and flask server installed
+Then Open Windows power shell
+Then Change Directory to the Project directory
+example "cd Your directory"
+then type python app.py
+then open http:\\127.0.0.1:5000 ON WEB BROWSER
